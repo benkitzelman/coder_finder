@@ -1,0 +1,14 @@
+{
+  "name": "CoderFinder",
+  "version": "0.0.1",
+  "private": false,
+  "scripts": {
+    "start": "node test"
+  },
+  "dependencies": {
+    "lodash" : "*",
+    "request": "*",
+    "coffee-script": "*",
+    "async": "*"
+  }
+}
