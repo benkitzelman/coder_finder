@@ -9,9 +9,9 @@ creds =
   password : process.env.PASS
 
 query =
-  location        : 'melbourne'
-  targetLanguages : ['javascript', 'coffeescript']
-  onlyHireable    : true
+  location        : process.env.LOCATION    or 'melbourne'
+  targetLanguages : ( process.env.LANGUAGES or 'javascript,coffeescript' ).split(',')
+  onlyHireable    : if process.env.HIREABLE is 'false' then false else true
 
 github = Github creds.username, creds.password
 
