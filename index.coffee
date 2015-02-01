@@ -1,63 +1,32 @@
 _       = require 'lodash'
 async   = require 'async'
 request = require 'request'
+Github  = require './src/github'
+users   = require './src/users'
 
-sendRequest = (url, cb) ->
-  username = process.env.USER
-  password = process.env.PASS
+creds =
+  username : process.env.USER
+  password : process.env.PASS
 
-  opts =
-    url: 'https://' + username + ':' + password + '@api.github.com' + url
-    headers:
-      'User-Agent' : 'Capt awesomes user agent'
+query =
+  location        : 'melbourne'
+  targetLanguages : ['javascript', 'coffeescript']
+  onlyHireable    : true
 
-  request.get opts, (err, response, body) ->
-    cb err, response, ( JSON.parse( body ) if body )
+github = Github creds.username, creds.password
 
+users.fetch location: query.location, github, (err, users) ->
+  return console.log('ERR', err)       if err
+  return console.log('No Users Found') if _.isEmpty(users)
+  
+  targetUsers      = if query.onlyHireable then _.select( users, hireable: true ) else users
+  loadAllUserRepos = _.map targetUsers, (u) -> u.repositories.bind(u)
+  
+  async.parallelLimit loadAllUserRepos, 20, (err) ->
+    return console.log('ERR', err) if err
 
-fetchAll = (url, results, done) ->
-  results ?= []
+    usersWithTargetLangs = _.select targetUsers, (u) ->
+      u._repos = _.reject u._repos, (r) -> not _.include( query.targetLanguages, r.language?.toLowerCase() )
+      not _.isEmpty u._repos
 
-  pageNumFromLink = (str) -> 
-    # <https://api.github.com/user/repos?page=50&per_page=100>; rel="last"
-    return unless num = str.match(/\<.+page=(\d+).*\>/)?[1]
-    parseInt num, 10
-
-  getResults = (url, cb) ->
-    sendRequest url, (err, resp, body) ->
-      return cb( err ) if err
-      results.push body.items...
-      cb(null, resp)
-
-  getResults url, (err, resp) ->
-    return cb( err ) if err
-
-    console.log 'link: ',resp.headers?.link
-    nextAndLast = resp.headers?.link?.split(',').map pageNumFromLink
-    if not nextAndLast
-      console.log resp.body
-      return done(null, users) unless nextAndLast
-
-    [next, last] = nextAndLast
-
-    pages = []
-    for i in [next..last]
-      pages.push "#{url}&page=#{i}"
-
-    async.eachLimit pages, 20, getResults, done
-
-fetchUsers = (query, users, cb) ->
-
-  buildQueryStr = ->
-    queryStr = "q="
-    for k, v of query
-      queryStr += if queryStr then '+' else 'q='
-      queryStr += "#{k}:#{v}"
-    queryStr
-
-  fetchAll "/search/users?#{ buildQueryStr() }", users, cb
-
-users = []
-fetchUsers location: 'melbourne', users, (err) ->
-  console.log('ERR', err) if err
-  console.log JSON.stringify(users, null, 4)
+    console.log JSON.stringify(usersWithTargetLangs, null, 4)
