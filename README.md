@@ -12,7 +12,7 @@ Find a developer in any location (i.e. Melbourne) who has at least one repo usin
 
 Finds all hireable githubbers who have at least one javascript or coffeescript repo
 
-### Search Options
+### Extended Search Options
 
 For now, env variables are used to specify params (i.e. similar to USER and PASS)
 
