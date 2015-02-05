@@ -5,7 +5,7 @@ class User
 
   @fetch = (query, provider, cb) ->
     userSummaries = []
-    provider.fetchAll "/search/users?#{ provider.buildQueryStr query }", userSummaries, (err) ->
+    provider.fetch "/search/users?#{ provider.buildQueryStr query }", userSummaries, (err) ->
       return cb(err) if err
 
       users = []
@@ -30,7 +30,7 @@ class User
     return cb( null, @_repos ) if @_repos
 
     @_repos = []
-    @provider.fetchAll @repos_url, @_repos, (err) =>
+    @provider.fetch @repos_url, @_repos, (err) =>
       cb err, @_repos
 
 module.exports = User

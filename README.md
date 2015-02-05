@@ -8,13 +8,13 @@ Find a developer in any location (i.e. Melbourne) who has at least one repo usin
 
 ### Miniumum Search
 
-`USER=[my GitHub username] PASS=[my Github password] coffee index.coffee`
+`coffee index.coffee`
 
 Finds all hireable githubbers who have at least one javascript or coffeescript repo
 
 ### Extended Search Options
 
-For now, env variables are used to specify params (i.e. similar to USER and PASS)
+For now, env variables are used to specify params
 
 **LOCATION**  : the city / country name (i.e. `Melbourne`)
 
@@ -26,4 +26,4 @@ For now, env variables are used to specify params (i.e. similar to USER and PASS
 
 Find all githubbers on the Gold Coast who use arduino (not just the hireable ones)
 
-`USER=wibble PASS=wobble LOCATION=gold\ coast LANGUAGES=arduino HIREABLE=false coffee index.coffee`
+`LOCATION=gold\ coast LANGUAGES=arduino HIREABLE=false coffee index.coffee`

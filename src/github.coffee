@@ -1,24 +1,35 @@
 _       = require 'lodash'
 async   = require 'async'
+fs      = require 'fs'
+path    = require 'path'
 request = require 'request'
+GHAuth  = require 'ghauth'
 
-creds =
-  username : null
-  password : null
+USER_AGENT = 'Capt awesomes user agent'
+token      = null
+
+logRequest = (title, content, done) ->
+  return done() unless process.env.DEBUG
+
+  outputFilePath = path.join __dirname, '../', "#{Date.now()}_#{title or ''}.json"
+  fs.writeFile outputFilePath, content, done
 
 sendRequest = (url, done) ->
   url  = url.replace /^https:\/\/api\.github\.com/, ''
   opts =
-    url: "https://#{ creds.username }:#{ creds.password }@api.github.com#{ url }"
+    url: "https://api.github.com#{ url }"
     headers:
-      'User-Agent' : 'Capt awesomes user agent'
+      'User-Agent'    : USER_AGENT
+      'Authorization' : "token #{token}"
 
-  console.log opts.url
   request.get opts, (err, resp, body) ->
     return done( 'Invalid Github Creds' ) if resp.statusCode is 401
     return done( 'Github Rate Limit Hit') if resp.statusCode is 403 and resp.headers['x-ratelimit-remaining'] is '0'
 
-    done err, resp, ( JSON.parse( body ) if body )
+    logRequest 'req', body, (err) ->
+      return done( "Err writing file:", err) if err
+
+      done err, resp, ( JSON.parse( body ) if body )
 
 buildQueryStr = (queryObj) ->
   queryStr = "q="
@@ -43,7 +54,7 @@ fetch = (url, results, done) ->
 fetchAll = (url, results, done) ->
   results ?= []
 
-  pageNumFromLink = (str) -> 
+  pageNumFromLink = (str) ->
     # i.e. <https://api.github.com/user/repos?page=50&per_page=100>; rel="last"
     return unless num = str.match(/\<.+page=(\d+).*\>/)?[1]
     parseInt num, 10
@@ -67,12 +78,22 @@ fetchAll = (url, results, done) ->
 
     async.eachLimit pages, 20, addResults, done
 
-module.exports = (username, password) ->
-  creds.username = username
-  creds.password = password
+authenticate = (done) ->
+  opts =
+    configName : 'creds'
+    userAgent  : USER_AGENT
 
+  GHAuth opts, (err, creds) ->
+    return done( err ) if err
+
+    token = creds.token
+    done()
+
+module.exports =
+  authenticate  : authenticate
   sendRequest   : sendRequest
   get           : get
   buildQueryStr : buildQueryStr
   fetch         : fetch
   fetchAll      : fetchAll
+  USER_AGENT    : USER_AGENT

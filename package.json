@@ -9,6 +9,7 @@
     "lodash" : "*",
     "request": "*",
     "coffee-script": "*",
-    "async": "*"
+    "async": "*",
+    "ghauth": "*"
   }
 }
